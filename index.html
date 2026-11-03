@@ -1,0 +1,785 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>شبیه‌ساز چانه و فک</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap">
+<style>
+/* Layout: on a phone the image and before/after toggle come first and the controls sit below; on wide screens two columns. */
+:root{
+  --bg:#F0F0F6; --surface:#FAFAFD; --ink:#16162B; --muted:#5C5C78; --line:#D2D2E1;
+  --accent:#4B3FB5; --on-accent:#FFFFFF; --accent-soft:#E6E3F8; --stage:#E2E2EC;
+  --mark:#6A5BFF; --scrim:rgba(12,12,26,.74); --on-scrim:#FFFFFF;
+  --ok:#1E7B4F; --warn:#9A5600; --bad:#B3261E;
+  --font-ui:"Vazirmatn",Tahoma,"Segoe UI",system-ui,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101018; --surface:#181824; --ink:#ECECF6; --muted:#A0A0BE; --line:#2D2D42;
+    --accent:#A39BF7; --on-accent:#14112F; --accent-soft:#2B2850; --stage:#0B0B12;
+    --ok:#5FD39A; --warn:#F0B35A; --bad:#FF8A80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101018; --surface:#181824; --ink:#ECECF6; --muted:#A0A0BE; --line:#2D2D42;
+  --accent:#A39BF7; --on-accent:#14112F; --accent-soft:#2B2850; --stage:#0B0B12;
+  --ok:#5FD39A; --warn:#F0B35A; --bad:#FF8A80;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-ui); font-size:15px; line-height:1.7;
+  padding-block:18px 28px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:1040px; margin-inline:auto; display:grid; gap:18px; grid-template-columns:minmax(0,1fr)}
+.top{display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.eyebrow{margin:0; font-size:12px; font-weight:600; letter-spacing:.03em; color:var(--accent)}
+h1{margin:0; font-size:26px; line-height:1.35; font-weight:800; text-wrap:balance}
+.badge{display:inline-flex; align-items:center; gap:8px; font-size:12px; padding:5px 12px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:var(--surface)}
+.badge i{width:8px; height:8px; border-radius:50%; background:var(--muted)}
+.badge[data-s="ok"] i{background:var(--ok)}
+.badge[data-s="off"] i{background:var(--warn)}
+
+.main{display:grid; gap:18px; grid-template-columns:minmax(0,1fr); align-items:start}
+@media (min-width:880px){ .main{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr); gap:22px} }
+
+.viewer{background:var(--stage); border-radius:var(--r); overflow:hidden; display:grid; place-items:center; min-height:260px}
+.empty{padding:26px 20px; display:grid; gap:14px; justify-items:center; text-align:center; max-width:390px}
+.empty svg{width:min(210px,58%); height:auto}
+.empty h2{margin:0; font-size:18px; font-weight:600; text-wrap:balance}
+.empty ul{margin:0; padding:0; list-style:none; display:grid; gap:2px; color:var(--muted); font-size:13px}
+.g-face{fill:none; stroke:var(--muted); stroke-width:2}
+.g-feat{fill:none; stroke:var(--muted); stroke-width:2; stroke-linecap:round; opacity:.6}
+.g-jaw{fill:none; stroke:var(--mark); stroke-width:3; stroke-dasharray:6 6}
+.g-dot circle{fill:var(--mark); stroke:var(--stage); stroke-width:2}
+.g-arrow path{fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round}
+
+.stage{
+  position:relative; aspect-ratio:var(--ar,.75);
+  width:min(100%, calc(66vh * var(--ar,.75))); max-width:100%;
+  touch-action:pan-y; user-select:none; -webkit-user-select:none; background:#000;
+}
+.stage.picking{cursor:crosshair; touch-action:manipulation}
+.stage canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.chip{position:absolute; top:10px; padding:1px 11px; border-radius:999px; background:var(--scrim); color:var(--on-scrim); font-size:12px; font-weight:600; pointer-events:none}
+.chip.a{left:10px}
+.chip.b{right:10px}
+.divider{position:absolute; top:0; bottom:0; width:44px; margin-left:-22px; display:grid; place-items:center; cursor:ew-resize; touch-action:none}
+.divider::before{content:""; position:absolute; top:0; bottom:0; left:50%; width:2px; margin-left:-1px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.28)}
+.grip{position:relative; width:38px; height:38px; border-radius:50%; background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.4); display:grid; place-items:center}
+.grip svg{width:20px; height:20px; stroke:#16162B; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round}
+.divider:focus-visible{outline:none}
+.divider:focus-visible .grip{outline:3px solid var(--mark); outline-offset:2px}
+.markers{position:absolute; inset:0; pointer-events:none}
+.markers svg{position:absolute; inset:0; width:100%; height:100%}
+.markers polyline{fill:none; stroke:var(--mark); stroke-width:2; stroke-linejoin:round; stroke-dasharray:6 5; vector-effect:non-scaling-stroke}
+.dot{position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:var(--mark); border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.35); display:grid; place-items:center; font-size:0; color:#fff}
+.dot.n{width:26px; height:26px; margin:-13px 0 0 -13px; font-size:12px; font-weight:800}
+.hint{position:absolute; left:10px; right:10px; bottom:10px; padding:8px 12px; border-radius:10px; background:var(--scrim); color:var(--on-scrim); font-size:14px; font-weight:600; text-align:center; pointer-events:none}
+
+.seg{display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:4px; margin-top:12px; border:1px solid var(--line); border-radius:999px; background:var(--surface)}
+.seg button{font:inherit; font-weight:600; min-height:40px; border:0; border-radius:999px; background:transparent; color:var(--muted); cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--on-accent)}
+.seg button:disabled{opacity:.45; cursor:default}
+
+.panel{display:grid; gap:18px; padding:18px; border:1px solid var(--line); border-radius:var(--r); background:var(--surface)}
+.status{margin:0; display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--muted)}
+.status .sd{flex:none; width:8px; height:8px; margin-top:10px; border-radius:50%; background:var(--muted)}
+.status[data-tone="ok"] .sd{background:var(--ok)}
+.status[data-tone="warn"] .sd{background:var(--warn)}
+.status[data-tone="bad"] .sd{background:var(--bad)}
+.status[data-tone="busy"] .sd{background:var(--accent)}
+.gated{display:grid; gap:18px}
+.panel[data-ready="false"] .gated{opacity:.45; pointer-events:none}
+.ctl{display:grid; gap:2px}
+.ctl-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+.ctl-head label{font-weight:600}
+.ctl-head output{font-variant-numeric:tabular-nums; direction:ltr; unicode-bidi:isolate; color:var(--accent); font-weight:600}
+.ends{display:flex; justify-content:space-between; direction:ltr; font-size:12px; color:var(--muted)}
+details.fine{border-top:1px solid var(--line); padding-top:12px}
+details.fine summary{cursor:pointer; font-weight:600; min-height:32px}
+.fine-body{display:grid; gap:16px; padding-top:10px}
+.metrics{margin:0; display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-top:14px; border-top:1px solid var(--line)}
+.metrics dt{font-size:12.5px; color:var(--muted)}
+.metrics dd{margin:0; font-size:24px; line-height:1.5; font-weight:600; font-variant-numeric:tabular-nums; direction:ltr; unicode-bidi:isolate; text-align:right}
+.micro{margin:-8px 0 0; font-size:12px; color:var(--muted)}
+.actions{display:flex; flex-wrap:wrap; gap:8px}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 18px; border-radius:999px; border:1px solid var(--accent); background:var(--accent); color:var(--on-accent); font:inherit; font-weight:600; cursor:pointer}
+.btn.ghost{background:transparent; color:var(--accent)}
+.btn.ghost[aria-pressed="true"]{background:var(--accent-soft)}
+.btn:disabled{opacity:.45; cursor:default}
+.note{margin:0; font-size:12px; color:var(--muted)}
+.sr-file{position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none}
+:where(button, summary, input):focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:32px; margin:0; background:transparent; direction:ltr; --a:0%; --b:0%}
+input[type=range]::-webkit-slider-runnable-track{height:4px; border-radius:2px; background:linear-gradient(to right, var(--line) 0%, var(--line) var(--a), var(--accent) var(--a), var(--accent) var(--b), var(--line) var(--b), var(--line) 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:28px; height:28px; margin-top:-12px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-track{height:4px; border-radius:2px; background:linear-gradient(to right, var(--line) 0%, var(--line) var(--a), var(--accent) var(--a), var(--accent) var(--b), var(--line) var(--b), var(--line) 100%)}
+input[type=range]::-moz-range-thumb{width:24px; height:24px; border-radius:50%; background:var(--surface); border:2px solid var(--accent)}
+input[type=range]:disabled{opacity:.6}
+</style>
+<!--BODY-->
+<div class="app" dir="rtl" lang="fa">
+  <header class="top">
+    <div>
+      <p class="eyebrow">نسخه آزمایشی · فقط فک و چانه</p>
+      <h1>شبیه‌ساز چانه و فک</h1>
+    </div>
+    <span class="badge" id="engine" data-s="wait"><i></i><span id="engineText">تشخیص خودکار: در حال آماده‌سازی</span></span>
+  </header>
+
+  <main class="main">
+    <section aria-label="تصویر">
+      <div class="viewer">
+        <div class="empty" id="empty">
+          <svg viewBox="0 0 240 280" aria-hidden="true" focusable="false">
+            <path class="g-face" d="M120 20C70 20 48 70 50 120C52 170 70 215 105 246C114 254 126 254 135 246C170 215 188 170 190 120C192 70 170 20 120 20Z"/>
+            <path class="g-feat" d="M84 112q12-8 24 0M132 112q12-8 24 0M120 124v26M104 186q16 8 32 0"/>
+            <path class="g-jaw" d="M54 150C66 200 90 232 112 250L128 250C150 232 174 200 186 150"/>
+            <g class="g-dot">
+              <circle cx="60" cy="170" r="5"/><circle cx="76" cy="205" r="5"/><circle cx="98" cy="236" r="5"/>
+              <circle cx="120" cy="251" r="5"/>
+              <circle cx="142" cy="236" r="5"/><circle cx="164" cy="205" r="5"/><circle cx="180" cy="170" r="5"/>
+            </g>
+            <g class="g-arrow"><path d="M30 182h16m-6-5 6 5-6 5"/><path d="M210 182h-16m6-5-6 5 6 5"/></g>
+          </svg>
+          <h2>یک عکس روبه‌رو انتخاب کنید</h2>
+          <ul>
+            <li>کل صورت و گردن در کادر باشد</li>
+            <li>موها کنار فک نباشد</li>
+            <li>حالت چهره خنثی، بدون چرخش و بدون فیلتر</li>
+          </ul>
+          <button type="button" class="btn" id="pickBtn">انتخاب عکس</button>
+        </div>
+
+        <div class="stage" id="stage" hidden>
+          <canvas id="before"></canvas>
+          <canvas id="after"></canvas>
+          <div class="markers" id="markers">
+            <svg id="lineSvg" preserveAspectRatio="none" aria-hidden="true"><polyline id="line" points=""/></svg>
+          </div>
+          <span class="chip a" id="chipA">بعد</span>
+          <span class="chip b" id="chipB">قبل</span>
+          <div class="divider" id="divider" role="slider" tabindex="0" aria-label="جداکننده قبل و بعد" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <span class="grip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg></span>
+          </div>
+          <div class="hint" id="hint" hidden></div>
+        </div>
+      </div>
+      <div class="seg" id="seg" role="group" aria-label="نمایش" hidden>
+        <button type="button" data-mode="before" aria-pressed="false">قبل</button>
+        <button type="button" data-mode="compare" aria-pressed="true">مقایسه</button>
+        <button type="button" data-mode="after" aria-pressed="false">بعد</button>
+      </div>
+    </section>
+
+    <section class="panel" id="panel" data-ready="false" aria-label="کنترل‌ها">
+      <p class="status" id="status" data-tone="idle" role="status" aria-live="polite">
+        <span class="sd"></span><span id="statusText">برای شروع یک عکس روبه‌رو انتخاب کنید.</span>
+      </p>
+
+      <div class="gated">
+        <div class="ctl">
+          <div class="ctl-head"><label for="intensity">شدت تغییر</label><output id="intensityOut" for="intensity">۴۰٪</output></div>
+          <input type="range" id="intensity" min="0" max="100" step="1" value="40" disabled>
+        </div>
+
+        <details class="fine">
+          <summary>تنظیم جداگانه فک و چانه</summary>
+          <div class="fine-body">
+            <div class="ctl">
+              <div class="ctl-head"><label for="jaw">خط فک</label><output id="jawOut" for="jaw">+۱۰۰</output></div>
+              <input type="range" id="jaw" min="-100" max="100" step="1" value="100" disabled>
+              <div class="ends"><span>پهن‌تر</span><span>باریک‌تر</span></div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><label for="chin">چانه</label><output id="chinOut" for="chin">+۵۰</output></div>
+              <input type="range" id="chin" min="-100" max="100" step="1" value="50" disabled>
+              <div class="ends"><span>کوتاه‌تر</span><span>بلندتر</span></div>
+            </div>
+          </div>
+        </details>
+
+        <dl class="metrics">
+          <div><dt>عرض زاویه فک</dt><dd id="mJaw">—</dd></div>
+          <div><dt>طول چانه</dt><dd id="mChin">—</dd></div>
+        </dl>
+        <p class="micro">مقادیر تقریبی و نسبت به عرض صورت</p>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn ghost" id="newBtn" disabled>عکس جدید</button>
+        <button type="button" class="btn ghost" id="marks" aria-pressed="false" disabled>نمایش نقاط</button>
+        <button type="button" class="btn ghost" id="pick" disabled>علامت‌گذاری دستی</button>
+        <button type="button" class="btn ghost" id="reset" disabled>بازنشانی</button>
+      </div>
+
+      <p class="note">این شبیه‌سازی تقریبی است و فقط برای گفت‌وگوی مشاوره‌ای کاربرد دارد؛ نتیجه واقعی درمان را تضمین نمی‌کند. عکس فقط روی همین دستگاه پردازش می‌شود و جایی ارسال نمی‌شود.</p>
+    </section>
+  </main>
+</div>
+<input type="file" id="file" class="sr-file" accept="image/*" tabindex="-1" aria-hidden="true">
+
+<script>
+(function () {
+  'use strict';
+
+  var docEl = document.documentElement;
+  docEl.lang = 'fa';
+  docEl.dir = 'rtl';
+
+  var MAX_SIDE = 1400;
+  var MP_VERSION = '0.10.14';
+  var MP_BUNDLE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VERSION + '/vision_bundle.mjs';
+  var MP_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VERSION + '/wasm';
+  var MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+
+  function $(id) { return document.getElementById(id); }
+  var ui = {
+    empty: $('empty'), stage: $('stage'), before: $('before'), after: $('after'),
+    divider: $('divider'), chipA: $('chipA'), chipB: $('chipB'), markers: $('markers'),
+    lineSvg: $('lineSvg'), line: $('line'), hint: $('hint'), seg: $('seg'), panel: $('panel'),
+    status: $('status'), statusText: $('statusText'), engine: $('engine'), engineText: $('engineText'),
+    file: $('file'), intensity: $('intensity'), jaw: $('jaw'), chin: $('chin'),
+    intensityOut: $('intensityOut'), jawOut: $('jawOut'), chinOut: $('chinOut'),
+    mJaw: $('mJaw'), mChin: $('mChin'), pick: $('pick'), marks: $('marks'),
+    reset: $('reset'), newBtn: $('newBtn'), pickBtn: $('pickBtn')
+  };
+
+  var state = { src: null, W: 0, H: 0, geom: null, manual: null, mode: 'compare', split: 50, showMarks: false, job: 0 };
+
+  /* ---------- helpers ---------- */
+  var nf = new Intl.NumberFormat('fa-IR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var ni = new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 });
+  function signedPct(v) {
+    var r = Math.round(v * 10) / 10;
+    if (r === 0) return nf.format(0) + '٪';
+    return (r > 0 ? '+' : '−') + nf.format(Math.abs(r)) + '٪';
+  }
+  function signedInt(v) {
+    if (v === 0) return ni.format(0);
+    return (v > 0 ? '+' : '−') + ni.format(Math.abs(v));
+  }
+  function sub(a, b) { return { x: a.x - b.x, y: a.y - b.y }; }
+  function dot(a, b) { return a.x * b.x + a.y * b.y; }
+  function len(a) { return Math.sqrt(a.x * a.x + a.y * a.y); }
+  function dist(a, b) { return len(sub(a, b)); }
+  function norm(a) { var l = len(a) || 1; return { x: a.x / l, y: a.y / l }; }
+  function withTimeout(p, ms) {
+    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, ms); })]);
+  }
+
+  function setStatus(tone, text) {
+    ui.status.setAttribute('data-tone', tone);
+    ui.statusText.textContent = text;
+  }
+  function setEngine(s) {
+    ui.engine.setAttribute('data-s', s);
+    ui.engineText.textContent = s === 'ok' ? 'تشخیص خودکار: آماده'
+      : s === 'off' ? 'تشخیص خودکار: در دسترس نیست (حالت دستی)'
+      : 'تشخیص خودکار: در حال آماده‌سازی';
+  }
+
+  /* ---------- WebGL warp ---------- */
+  var gl = ui.after.getContext('webgl', { antialias: false, alpha: false }) || ui.after.getContext('experimental-webgl');
+  var glProg = null, glTex = null, loc = {};
+  var VERT = 'attribute vec2 aPos; varying vec2 vUV; void main(){ vUV = aPos*0.5+0.5; gl_Position = vec4(aPos,0.0,1.0); }';
+  var FRAG = [
+    '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+    'precision highp float;',
+    '#else',
+    'precision mediump float;',
+    '#endif',
+    'varying vec2 vUV;',
+    'uniform sampler2D uTex;',
+    'uniform vec2 uSize;',
+    'uniform int uCount;',
+    'uniform vec2 uC[16];',
+    'uniform vec2 uD[16];',
+    'uniform float uR[16];',
+    'uniform vec2 uMouth;',
+    'uniform vec2 uU;',
+    'uniform vec2 uV;',
+    'uniform vec2 uMouthR;',
+    'void main(){',
+    '  vec2 p = vec2(vUV.x, 1.0 - vUV.y) * uSize;',
+    '  vec2 d = vec2(0.0);',
+    '  for (int i = 0; i < 16; i++) {',
+    '    if (i >= uCount) break;',
+    '    vec2 q = p - uC[i];',
+    '    float w = exp(-dot(q,q) / (2.0 * uR[i] * uR[i]));',
+    '    d += uD[i] * w;',
+    '  }',
+    '  vec2 m = p - uMouth;',
+    '  float ex = dot(m, uV) / uMouthR.x;',
+    '  float ey = dot(m, uU) / uMouthR.y;',
+    '  float prot = smoothstep(1.0, 1.4, length(vec2(ex, ey)));',
+    '  vec2 src = p - d * prot;',
+    '  vec2 uv = vec2(src.x / uSize.x, 1.0 - src.y / uSize.y);',
+    '  gl_FragColor = texture2D(uTex, uv);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) || 'shader');
+    return s;
+  }
+  function initGL() {
+    if (!gl) return false;
+    try {
+      glProg = gl.createProgram();
+      gl.attachShader(glProg, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(glProg, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(glProg);
+      if (!gl.getProgramParameter(glProg, gl.LINK_STATUS)) throw new Error('link');
+      gl.useProgram(glProg);
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      var aPos = gl.getAttribLocation(glProg, 'aPos');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+      ['uTex', 'uSize', 'uCount', 'uMouth', 'uU', 'uV', 'uMouthR'].forEach(function (n) { loc[n] = gl.getUniformLocation(glProg, n); });
+      loc.uC = gl.getUniformLocation(glProg, 'uC[0]');
+      loc.uD = gl.getUniformLocation(glProg, 'uD[0]');
+      loc.uR = gl.getUniformLocation(glProg, 'uR[0]');
+      glTex = gl.createTexture();
+      return true;
+    } catch (e) {
+      console.warn('WebGL init failed', e);
+      return false;
+    }
+  }
+  var glOK = initGL();
+
+  function uploadTexture() {
+    gl.bindTexture(gl.TEXTURE_2D, glTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, state.src);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  }
+
+  /* ---------- warp field ---------- */
+  function buildHandles(g, jaw, chin) {
+    var H = [], fw = g.faceW, i;
+    for (i = 0; i < g.jawHandles.length; i++) {
+      var h = g.jawHandles[i];
+      var mag = jaw * 0.030 * fw * h.w;
+      H.push({ x: h.x, y: h.y, dx: -h.sx * g.v.x * mag, dy: -h.sx * g.v.y * mag, r: 0.075 * fw });
+    }
+    var cm = chin * 0.045 * fw;
+    H.push({ x: g.chin.x - g.u.x * 0.02 * fw, y: g.chin.y - g.u.y * 0.02 * fw, dx: g.u.x * cm, dy: g.u.y * cm, r: 0.10 * fw });
+    for (i = 0; i < g.chinSides.length; i++) {
+      var s = g.chinSides[i];
+      var m = chin * 0.012 * fw;
+      H.push({ x: s.x, y: s.y, dx: -s.sx * g.v.x * m, dy: -s.sx * g.v.y * m, r: 0.06 * fw });
+    }
+    return H;
+  }
+  function dispAt(H, x, y) {
+    var dx = 0, dy = 0;
+    for (var i = 0; i < H.length; i++) {
+      var h = H[i], qx = x - h.x, qy = y - h.y;
+      var w = Math.exp(-(qx * qx + qy * qy) / (2 * h.r * h.r));
+      dx += h.dx * w; dy += h.dy * w;
+    }
+    return { x: dx, y: dy };
+  }
+
+  /* ---------- geometry ---------- */
+  function geometryFromLandmarks(lm, W, H) {
+    function P(i) { return { x: lm[i].x * W, y: lm[i].y * H }; }
+    var top = P(10), chin = P(152);
+    var u = norm(sub(chin, top));
+    var v = { x: u.y, y: -u.x };
+    var faceW = dist(P(234), P(454));
+    var mid = { x: (top.x + chin.x) / 2, y: (top.y + chin.y) / 2 };
+    function side(p) { return dot(sub(p, mid), v) < 0 ? -1 : 1; }
+    var spec = [[132, .5], [58, 1], [172, 1], [136, .85], [150, .6], [149, .35],
+                [361, .5], [288, 1], [397, 1], [365, .85], [379, .6], [378, .35]];
+    var jawHandles = spec.map(function (s) {
+      var p = P(s[0]);
+      return { x: p.x, y: p.y, w: s[1], sx: side(p) };
+    });
+    var chinSides = [176, 400].map(function (i) { var p = P(i); return { x: p.x, y: p.y, sx: side(p) }; });
+    var contour = [132, 58, 172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288, 361].map(P);
+    var m1 = P(61), m2 = P(291);
+    var mouthW = dist(m1, m2);
+    var warn = null;
+    var nose = P(1);
+    var a = dist(nose, P(234)), b = dist(nose, P(454));
+    if (Math.max(a, b) / Math.max(1, Math.min(a, b)) > 1.35) {
+      warn = 'چهره شناسایی شد، اما به نظر می‌رسد سر کمی چرخیده است. برای نتیجه دقیق‌تر عکس کاملاً روبه‌رو لازم است.';
+    }
+    return {
+      faceW: faceW, u: u, v: v, chin: chin,
+      angleL: P(172), angleR: P(397),
+      jawHandles: jawHandles, chinSides: chinSides, contour: contour,
+      mouth: { x: (m1.x + m2.x) / 2, y: (m1.y + m2.y) / 2 },
+      mouthR: { x: 0.62 * mouthW, y: 0.32 * mouthW },
+      warn: warn
+    };
+  }
+
+  function geometryFromManual(p1, p2, p3) {
+    var A = p1, B = p2, C = p3;
+    if (A.x > C.x) { var t = A; A = C; C = t; }
+    var ac = sub(C, A), wj = len(ac) || 1;
+    var v = { x: ac.x / wj, y: ac.y / wj };
+    var u = { x: -v.y, y: v.x };
+    var faceW = wj / 0.80;
+    function build(ang, sx) {
+      var toB = sub(B, ang);
+      var ox = sx * v.x * 0.03 * faceW, oy = sx * v.y * 0.03 * faceW;
+      return [
+        { x: ang.x - u.x * 0.16 * faceW, y: ang.y - u.y * 0.16 * faceW, w: 0.5, sx: sx },
+        { x: ang.x, y: ang.y, w: 1, sx: sx },
+        { x: ang.x + toB.x * 0.45 + ox, y: ang.y + toB.y * 0.45 + oy, w: 0.85, sx: sx },
+        { x: ang.x + toB.x * 0.78 + ox * 0.8, y: ang.y + toB.y * 0.78 + oy * 0.8, w: 0.4, sx: sx }
+      ];
+    }
+    var L = build(A, -1), R = build(C, 1);
+    var chinSides = [-1, 1].map(function (sx) {
+      return { x: B.x + sx * v.x * 0.10 * faceW - u.x * 0.03 * faceW, y: B.y + sx * v.y * 0.10 * faceW - u.y * 0.03 * faceW, sx: sx };
+    });
+    var mouthW = 0.38 * faceW;
+    return {
+      faceW: faceW, u: u, v: v, chin: B, angleL: A, angleR: C,
+      jawHandles: L.concat(R), chinSides: chinSides,
+      contour: L.concat([B], R.slice().reverse()),
+      mouth: { x: B.x - u.x * 0.34 * faceW, y: B.y - u.y * 0.34 * faceW },
+      mouthR: { x: 0.62 * mouthW, y: 0.32 * mouthW },
+      warn: null
+    };
+  }
+
+  /* ---------- face detection (MediaPipe) ---------- */
+  var landmarkerPromise = null, engineFailed = false;
+  function getLandmarker() {
+    if (!landmarkerPromise) {
+      landmarkerPromise = (async function () {
+        var mod = await import(MP_BUNDLE);
+        var fileset = await mod.FilesetResolver.forVisionTasks(MP_WASM);
+        return await mod.FaceLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: MP_MODEL, delegate: 'CPU' },
+          runningMode: 'IMAGE',
+          numFaces: 1
+        });
+      })();
+    }
+    return landmarkerPromise;
+  }
+  withTimeout(getLandmarker(), 30000).then(function () { setEngine('ok'); }).catch(function (e) {
+    engineFailed = true; setEngine('off'); console.warn('face engine unavailable', e);
+  });
+
+  async function runDetection(job) {
+    setStatus('busy', 'در حال تشخیص چهره…');
+    if (engineFailed) { startManual('engine'); return; }
+    var lm = null;
+    try {
+      var lmk = await withTimeout(getLandmarker(), 30000);
+      if (job !== state.job) return;
+      var res = lmk.detect(state.src);
+      lm = res && res.faceLandmarks && res.faceLandmarks[0];
+    } catch (err) {
+      if (job !== state.job) return;
+      engineFailed = true; setEngine('off'); console.warn(err);
+      startManual('engine');
+      return;
+    }
+    if (job !== state.job) return;
+    if (!lm) { startManual('noface'); return; }
+    var g = geometryFromLandmarks(lm, state.W, state.H);
+    applyGeometry(g, g.warn ? 'warn' : 'ok', g.warn || 'چهره شناسایی شد. نقاط فک و چانه خودکار تعیین شد.');
+  }
+
+  /* ---------- manual marking ---------- */
+  var STEPS = [
+    '۱ از ۳ · گوشه فک سمت چپ تصویر را لمس کنید',
+    '۲ از ۳ · نوک چانه را لمس کنید',
+    '۳ از ۳ · گوشه فک سمت راست تصویر را لمس کنید'
+  ];
+  function startManual(reason) {
+    state.geom = null;
+    state.manual = { pts: [] };
+    setMode('before');
+    lockSeg(true);
+    gate(false);
+    ui.stage.classList.add('picking');
+    var msg = reason === 'engine' ? 'تشخیص خودکار در این محیط اجرا نمی‌شود. سه نقطه را روی عکس علامت بزنید.'
+      : reason === 'noface' ? 'چهره‌ای پیدا نشد. عکس روبه‌رو و روشن‌تری بگیرید یا سه نقطه را دستی علامت بزنید.'
+      : 'سه نقطه را روی عکس علامت بزنید.';
+    setStatus('warn', msg);
+    updateHint();
+    renderOverlay();
+    scheduleRender();
+  }
+  function updateHint() {
+    if (state.manual) {
+      ui.hint.hidden = false;
+      ui.hint.textContent = STEPS[Math.min(state.manual.pts.length, 2)];
+    } else {
+      ui.hint.hidden = true;
+    }
+  }
+  ui.stage.addEventListener('click', function (e) {
+    if (!state.manual) return;
+    var r = ui.stage.getBoundingClientRect();
+    var p = { x: (e.clientX - r.left) / r.width * state.W, y: (e.clientY - r.top) / r.height * state.H };
+    state.manual.pts.push(p);
+    if (state.manual.pts.length < 3) {
+      updateHint(); renderOverlay();
+    } else {
+      var pts = state.manual.pts;
+      var g = geometryFromManual(pts[0], pts[1], pts[2]);
+      var below = dot(sub(g.chin, { x: (g.angleL.x + g.angleR.x) / 2, y: (g.angleL.y + g.angleR.y) / 2 }), g.u) > 0;
+      applyGeometry(g, below ? 'ok' : 'warn',
+        below ? 'نقاط ثبت شد. اسلایدر را حرکت دهید.' : 'نوک چانه باید پایین‌تر از دو گوشه فک باشد. اگر نتیجه درست نیست، دوباره علامت بزنید.');
+    }
+  });
+
+  function applyGeometry(g, tone, msg) {
+    state.geom = g;
+    state.manual = null;
+    ui.stage.classList.remove('picking');
+    updateHint();
+    lockSeg(false);
+    gate(true);
+    state.split = 50;
+    setMode('compare');
+    setStatus(tone, msg);
+    renderOverlay();
+    scheduleRender();
+  }
+
+  /* ---------- overlay ---------- */
+  function addDot(p, label) {
+    var d = document.createElement('span');
+    d.className = 'dot' + (label ? ' n' : '');
+    d.style.left = (p.x / state.W * 100) + '%';
+    d.style.top = (p.y / state.H * 100) + '%';
+    if (label) d.textContent = label;
+    ui.markers.appendChild(d);
+  }
+  function renderOverlay() {
+    Array.prototype.slice.call(ui.markers.querySelectorAll('.dot')).forEach(function (n) { n.remove(); });
+    ui.line.setAttribute('points', '');
+    ui.lineSvg.setAttribute('viewBox', '0 0 ' + state.W + ' ' + state.H);
+    if (state.manual) {
+      state.manual.pts.forEach(function (p, i) { addDot(p, ni.format(i + 1)); });
+      return;
+    }
+    if (state.geom && state.showMarks) {
+      ui.line.setAttribute('points', state.geom.contour.map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' '));
+      state.geom.contour.forEach(function (p) { addDot(p, ''); });
+    }
+  }
+
+  /* ---------- render ---------- */
+  var raf = 0;
+  function scheduleRender() {
+    if (raf) return;
+    raf = requestAnimationFrame(function () { raf = 0; draw(); });
+  }
+  var cArr = new Float32Array(32), dArr = new Float32Array(32), rArr = new Float32Array(16);
+  function params() {
+    var k = +ui.intensity.value / 100;
+    return { jaw: k * (+ui.jaw.value / 100), chin: k * (+ui.chin.value / 100) };
+  }
+  function draw() {
+    if (!state.src || !glOK) return;
+    var g = state.geom;
+    var p = params();
+    var H = g ? buildHandles(g, p.jaw, p.chin) : [];
+    var n = Math.min(H.length, 16), i;
+    cArr.fill(0); dArr.fill(0); rArr.fill(1);
+    for (i = 0; i < n; i++) {
+      cArr[2 * i] = H[i].x; cArr[2 * i + 1] = H[i].y;
+      dArr[2 * i] = H[i].dx; dArr[2 * i + 1] = H[i].dy;
+      rArr[i] = H[i].r;
+    }
+    gl.viewport(0, 0, state.W, state.H);
+    gl.useProgram(glProg);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, glTex);
+    gl.uniform1i(loc.uTex, 0);
+    gl.uniform2f(loc.uSize, state.W, state.H);
+    gl.uniform1i(loc.uCount, n);
+    gl.uniform2fv(loc.uC, cArr);
+    gl.uniform2fv(loc.uD, dArr);
+    gl.uniform1fv(loc.uR, rArr);
+    if (g) {
+      gl.uniform2f(loc.uMouth, g.mouth.x, g.mouth.y);
+      gl.uniform2f(loc.uU, g.u.x, g.u.y);
+      gl.uniform2f(loc.uV, g.v.x, g.v.y);
+      gl.uniform2f(loc.uMouthR, g.mouthR.x, g.mouthR.y);
+    } else {
+      gl.uniform2f(loc.uMouth, -1e5, -1e5);
+      gl.uniform2f(loc.uU, 0, 1);
+      gl.uniform2f(loc.uV, 1, 0);
+      gl.uniform2f(loc.uMouthR, 1, 1);
+    }
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    if (g) {
+      var dA = dispAt(H, g.angleL.x, g.angleL.y), dC = dispAt(H, g.angleR.x, g.angleR.y);
+      var widthChange = (dot(dC, g.v) - dot(dA, g.v)) / g.faceW * 100;
+      var tip = dispAt(H, g.chin.x, g.chin.y);
+      var chinChange = dot(tip, g.u) / g.faceW * 100;
+      ui.mJaw.textContent = signedPct(widthChange);
+      ui.mChin.textContent = signedPct(chinChange);
+    } else {
+      ui.mJaw.textContent = '—';
+      ui.mChin.textContent = '—';
+    }
+    applyClip();
+  }
+
+  function applyClip() {
+    var s = state.mode === 'after' ? 100 : state.mode === 'before' ? 0 : state.split;
+    ui.after.style.clipPath = 'inset(0 ' + (100 - s) + '% 0 0)';
+    ui.divider.style.left = s + '%';
+    ui.divider.hidden = state.mode !== 'compare';
+    ui.divider.setAttribute('aria-valuenow', String(Math.round(state.split)));
+    ui.chipA.hidden = s < 10;
+    ui.chipB.hidden = s > 90;
+  }
+
+  /* ---------- UI wiring ---------- */
+  function setMode(mode) {
+    state.mode = mode;
+    Array.prototype.forEach.call(ui.seg.querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false');
+    });
+    applyClip();
+  }
+  function lockSeg(lock) {
+    Array.prototype.forEach.call(ui.seg.querySelectorAll('button'), function (b) { b.disabled = lock; });
+  }
+  function gate(ready) {
+    ui.panel.setAttribute('data-ready', ready ? 'true' : 'false');
+    [ui.intensity, ui.jaw, ui.chin, ui.reset, ui.marks].forEach(function (el) { el.disabled = !ready; });
+    ui.newBtn.disabled = !state.src;
+    ui.pick.disabled = !state.src;
+  }
+  function paintRange(el) {
+    var min = +el.min, max = +el.max, val = +el.value;
+    var pct = (val - min) / (max - min) * 100;
+    var a = 0, b = pct;
+    if (min < 0) { a = Math.min(50, pct); b = Math.max(50, pct); }
+    el.style.setProperty('--a', a + '%');
+    el.style.setProperty('--b', b + '%');
+  }
+  function syncLabels() {
+    ui.intensityOut.textContent = ni.format(+ui.intensity.value) + '٪';
+    ui.jawOut.textContent = signedInt(+ui.jaw.value);
+    ui.chinOut.textContent = signedInt(+ui.chin.value);
+    [ui.intensity, ui.jaw, ui.chin].forEach(paintRange);
+  }
+  [ui.intensity, ui.jaw, ui.chin].forEach(function (el) {
+    el.addEventListener('input', function () { syncLabels(); scheduleRender(); });
+  });
+  syncLabels();
+
+  ui.reset.addEventListener('click', function () {
+    ui.intensity.value = 40; ui.jaw.value = 100; ui.chin.value = 50;
+    syncLabels(); scheduleRender();
+  });
+  ui.marks.addEventListener('click', function () {
+    state.showMarks = !state.showMarks;
+    ui.marks.setAttribute('aria-pressed', state.showMarks ? 'true' : 'false');
+    renderOverlay();
+  });
+  ui.pick.addEventListener('click', function () { if (state.src) startManual('user'); });
+  ui.seg.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-mode]') : null;
+    if (b && !b.disabled) setMode(b.getAttribute('data-mode'));
+  });
+
+  /* compare divider */
+  var dragging = false;
+  function setSplit(e) {
+    var r = ui.stage.getBoundingClientRect();
+    state.split = Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100));
+    applyClip();
+  }
+  ui.stage.addEventListener('pointerdown', function (e) {
+    if (state.mode !== 'compare' || state.manual) return;
+    dragging = true;
+    try { ui.stage.setPointerCapture(e.pointerId); } catch (_) {}
+    setSplit(e);
+  });
+  ui.stage.addEventListener('pointermove', function (e) { if (dragging) setSplit(e); });
+  function endDrag() { dragging = false; }
+  ui.stage.addEventListener('pointerup', endDrag);
+  ui.stage.addEventListener('pointercancel', endDrag);
+  ui.divider.addEventListener('keydown', function (e) {
+    var step = e.key === 'ArrowLeft' ? -5 : e.key === 'ArrowRight' ? 5 : 0;
+    if (!step) return;
+    e.preventDefault();
+    state.split = Math.max(0, Math.min(100, state.split + step));
+    applyClip();
+  });
+
+  /* image loading */
+  function openPicker() { ui.file.value = ''; ui.file.click(); }
+  ui.pickBtn.addEventListener('click', openPicker);
+  ui.newBtn.addEventListener('click', openPicker);
+  ui.file.addEventListener('change', function () {
+    var f = ui.file.files && ui.file.files[0];
+    if (f) loadFile(f);
+  });
+
+  async function loadFile(file) {
+    if (!glOK) { setStatus('bad', 'WebGL در این مرورگر فعال نیست و نمایش تغییر شکل ممکن نیست.'); return; }
+    var job = ++state.job;
+    setStatus('busy', 'در حال بارگذاری تصویر…');
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.src = url;
+    try { await img.decode(); }
+    catch (e) { URL.revokeObjectURL(url); setStatus('bad', 'این فایل به‌عنوان تصویر باز نشد. یک عکس JPG یا PNG انتخاب کنید.'); return; }
+    if (job !== state.job) { URL.revokeObjectURL(url); return; }
+    var nw = img.naturalWidth, nh = img.naturalHeight;
+    var s = Math.min(1, MAX_SIDE / Math.max(nw, nh));
+    var W = Math.max(1, Math.round(nw * s)), H = Math.max(1, Math.round(nh * s));
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    c.getContext('2d').drawImage(img, 0, 0, W, H);
+    URL.revokeObjectURL(url);
+
+    state.src = c; state.W = W; state.H = H; state.geom = null; state.manual = null;
+    ui.empty.hidden = true;
+    ui.stage.hidden = false;
+    ui.seg.hidden = false;
+    ui.stage.style.setProperty('--ar', String(W / H));
+    ui.before.width = W; ui.before.height = H;
+    ui.before.getContext('2d').drawImage(c, 0, 0);
+    ui.after.width = W; ui.after.height = H;
+    uploadTexture();
+    gate(false);
+    lockSeg(true);
+    setMode('before');
+    renderOverlay();
+    draw();
+    runDetection(job);
+  }
+
+  gate(false);
+  applyClip();
+})();
+</script>
+
+</body></html>
